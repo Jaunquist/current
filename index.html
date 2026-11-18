@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Current</title>
+
+<!-- standalone / full-screen on phone -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Current">
+<meta name="theme-color" content="#0e1116">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --line:#232a33;
+    --txt:#e6edf3; --dim:#8b949e; --accent:#f0b429; --accent2:#58a6ff;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  html{background:var(--bg);height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--txt);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100dvh;
+    padding-bottom:calc(64px + env(safe-area-inset-bottom));
+    overscroll-behavior-y:none;
+    -webkit-font-smoothing:antialiased;
+  }
+  header,nav{-webkit-user-select:none;user-select:none}
+  header{
+    position:sticky;top:0;z-index:10;
+    background:rgba(14,17,22,.88);backdrop-filter:saturate(1.4) blur(12px);
+    padding:calc(14px + env(safe-area-inset-top)) 16px 10px;
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  h1{font-size:17px;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--accent)}
+  .meta{font-size:12px;color:var(--dim)}
+  main{
+    padding:16px;max-width:720px;margin:0 auto;
+    padding-left:max(16px,env(safe-area-inset-left));
+    padding-right:max(16px,env(safe-area-inset-right));
+  }
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin-bottom:10px;
+  }
+  .card h3{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+  .card .sub{font-size:12px;color:var(--dim);margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .tag{background:#1f2630;border-radius:999px;padding:2px 8px;font-size:11px;color:var(--dim)}
+  .tag.amber{background:rgba(240,180,41,.14);color:var(--accent)}
+  .expand{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:#c9d1d9}
+  .expand a{color:var(--accent2)}
+  nav{
+    position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);
+    border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav button{
+    flex:1;background:none;border:none;color:var(--dim);font-size:11px;
+    padding:11px 2px;cursor:pointer;font-family:inherit;
+  }
+  nav button.on{color:var(--accent)}
+  nav button b{display:block;font-size:17px;font-weight:400;margin-bottom:2px}
+  .hide{display:none!important}   /* must beat .gate/.primer display rules below */
+  textarea,input[type=search]{
+    width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    color:var(--txt);padding:12px;font:inherit;font-size:16px;
+  }
+  textarea{resize:vertical;min-height:84px}
+  input[type=search]{-webkit-appearance:none}
+  button.go{
+    width:100%;margin-top:10px;background:var(--accent);color:#1a1200;border:none;
+    border-radius:var(--radius);padding:13px;font:inherit;font-weight:600;cursor:pointer;
+  }
+  button.go:disabled{opacity:.5}
+  button.ghost{
+    background:none;border:1px solid var(--line);color:var(--dim);
+    border-radius:var(--radius);padding:9px 14px;font:inherit;font-size:13px;cursor:pointer;
+  }
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chips button{
+    background:var(--panel);border:1px solid var(--line);color:var(--dim);
+    border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;cursor:pointer;text-align:left;
+  }
+  .primer{
+    background:linear-gradient(180deg,rgba(240,180,41,.07),transparent);
+    border:1px solid rgba(240,180,41,.25);border-radius:var(--radius);
+    padding:14px;margin-bottom:16px;
+  }
+  .primer .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .primer p{margin:0 0 12px;font-size:15px;line-height:1.4}
+  .primer .row{display:flex;gap:8px}
+  .primer .row button:first-child{
+    flex:1;background:var(--accent);color:#1a1200;border:none;border-radius:var(--radius);
+    padding:11px;font:inherit;font-weight:600;cursor:pointer;
+  }
+  .bar{height:3px;background:var(--line);border-radius:2px;margin-top:12px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .out{margin-top:18px;font-size:15px;line-height:1.6}
+  .out h2{font-size:16px;margin:20px 0 8px}
+  .out h3{font-size:14px;margin:16px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+  .out ul{padding-left:20px;margin:8px 0}
+  .out li{margin:5px 0}
+  .out a{color:var(--accent2)}
+  .gsuggest{margin-top:18px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .sources{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:13px}
+  .sources div{margin:5px 0}
+  .saved{margin-top:14px;font-size:12px;color:var(--accent)}
+  .match{
+    margin-top:10px;padding:10px 12px;background:var(--panel);
+    border:1px solid var(--line);border-left:2px solid var(--accent);
+    border-radius:8px;font-size:13px;cursor:pointer;
+  }
+  .match b{display:block;font-size:11px;color:var(--accent);font-weight:600;
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .empty{color:var(--dim);font-size:14px;text-align:center;padding:40px 20px;line-height:1.6}
+  .gate{
+    text-align:center;padding:24px;
+    min-height:100dvh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+  }
+  .gate p{color:var(--dim);font-size:14px;margin:0 0 24px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate">
+  <h1 style="font-size:22px;margin:0 0 8px">Cur<span style="color:var(--accent)">rent</span></h1>
+  <p>Sign in to continue.</p>
+  <div id="gbtn" style="display:flex;justify-content:center"></div>
+</div>
+
+<div id="app" class="hide">
+  <header>
+    <h1>Cur<span>rent</span></h1>
+    <div class="meta" id="stamp"></div>
+  </header>
+
+  <main>
+    <section id="t-brief"></section>
+
+    <section id="t-deals" class="hide"></section>
+
+    <section id="t-research" class="hide">
+      <div id="primerBox"></div>
+      <textarea id="q" placeholder="Ask anything about energy, a market, a business model…"></textarea>
+      <div id="matches"></div>
+      <button class="go" id="goBtn">Research</button>
+      <div class="chips">
+        <button data-q="What are the main consumer and SME pain points with electricity service in the Philippines right now?">Consumer pain points</button>
+        <button data-q="Which VCs and funds have recently expanded into Southeast Asia, and who is actively deploying into the Philippines?">VCs entering PH</button>
+        <button data-q="Where is energy and climate venture capital flowing in Southeast Asia right now, by sector and stage?">Where the money goes</button>
+        <button data-q="What business models are distributed energy and solar startups using in emerging markets right now?">DER business models</button>
+      </div>
+      <div class="out" id="out"></div>
+    </section>
+
+    <section id="t-notes" class="hide">
+      <input type="search" id="nq" placeholder="Search your notes…" autocomplete="off">
+      <div id="noteList" style="margin-top:14px"></div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="on" data-tab="brief"><b>◎</b>Brief</button>
+    <button data-tab="deals"><b>◇</b>Deals</button>
+    <button data-tab="research"><b>⌕</b>Research</button>
+    <button data-tab="notes"><b>▤</b>Notes</button>
+  </nav>
+</div>
+
+<script>
+// ---- configure these two ----------------------------------------------
+const CLIENT_ID   = '995649008690-6ai6i6ippnt9j01f8avql4kib5uign76.apps.googleusercontent.com';           // ends in .apps.googleusercontent.com
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwo8EueuKcNtePtz26mHqdYVdjfLqqzGXL63cp9vopdOcxbuQH1nfPuuQOMPoI0tUAKFw/exec';    // ends in /exec
+// -----------------------------------------------------------------------
+
+let idToken = null;
+let cache = { brief: [], deals: [], notes: [], primer: { next: null, left: 0, total: 0 }, synthesis: null, updated: null };
+
+window.onGoogleCredential = function (res) {
+  idToken = res.credential;
+  document.getElementById('gate').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  loadData();
+};
+
+window.onload = function () {
+  const wait = setInterval(function () {
+    if (!window.google || !google.accounts) return;
+    clearInterval(wait);
+    google.accounts.id.initialize({ client_id: CLIENT_ID, callback: window.onGoogleCredential });
+    google.accounts.id.renderButton(document.getElementById('gbtn'), { theme: 'filled_black', size: 'large', shape: 'pill' });
+    google.accounts.id.prompt();
+  }, 100);
+};
+
+// POST as text/plain so the browser sends no CORS preflight (Apps Script can't answer one).
+async function call(action, extra) {
+  const body = Object.assign({ action: action, idToken: idToken }, extra || {});
+  const res = await fetch(BACKEND_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (data.error === 'unauthorized') {
+    idToken = null;
+    document.getElementById('app').classList.add('hide');
+    document.getElementById('gate').classList.remove('hide');
+    throw new Error('Session expired — sign in again.');
+  }
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+async function loadData() {
+  render('brief', '<div class="empty"><span class="spin"></span></div>');
+  try {
+    cache = await call('data');
+    document.getElementById('stamp').textContent = cache.updated
+      ? 'updated ' + new Date(cache.updated).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      : '';
+    drawBrief(); drawDeals(); drawPrimer(); drawNotes();
+  } catch (e) {
+    render('brief', '<div class="empty">' + esc(e.message) + '</div>');
+  }
+}
+
+/* ------------------------------------------------------------------ brief */
+
+function drawBrief() {
+  if (!cache.brief.length) return render('brief', '<div class="empty">Nothing yet. Run <code>testIngest</code> once in Apps Script.</div>');
+  render('brief', cache.brief.map(function (r, i) {
+    return '<article class="card" data-i="' + i + '" data-kind="brief">' +
+      '<h3>' + esc(r.title) + '</h3>' +
+      '<div class="sub"><span class="tag">' + esc(r.topic) + '</span><span>' + esc(r.source) + '</span><span>' + ago(r.date) + '</span></div>' +
+      '<div class="expand hide"></div></article>';
+  }).join(''));
+}
+
+function drawDeals() {
+  let html = '';
+  if (cache.synthesis) {
+    html += '<div class="card" style="border-color:rgba(240,180,41,.25)">' +
+      '<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">' +
+      'Last 90 days · ' + new Date(cache.synthesis.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) + '</div>' +
+      '<div class="out" style="margin:0;font-size:14px">' + md(cache.synthesis.text) + '</div></div>';
+  }
+  if (!cache.deals.length) {
+    html += '<div class="empty">No rounds captured yet.</div>';
+  } else {
+    html += cache.deals.map(function (r, i) {
+      return '<article class="card" data-i="' + i + '" data-kind="deals">' +
+        '<h3>' + esc(r.title) + '</h3>' +
+        '<div class="sub">' + (r.amount ? '<span class="tag amber">' + esc(r.amount) + '</span>' : '') +
+        '<span>' + esc(r.source) + '</span><span>' + ago(r.date) + '</span></div>' +
+        '<div class="expand hide"></div></article>';
+    }).join('');
+  }
+  render('deals', html);
+}
+
+/* ----------------------------------------------------------------- primer */
+
+function drawPrimer() {
+  const p = cache.primer || {};
+  const box = document.getElementById('primerBox');
+  if (!p.next) {
+    box.innerHTML = p.total
+      ? '<div class="primer"><div class="lbl">Primer complete</div>' +
+        '<p style="margin:0;color:var(--dim);font-size:14px">All ' + p.total + ' questions worked through. They are in Notes.</p></div>'
+      : '';
+    return;
+  }
+  const done = p.total - p.left;
+  box.innerHTML =
+    '<div class="primer">' +
+      '<div class="lbl">Primer · ' + p.next.topic + ' · ' + done + ' of ' + p.total + '</div>' +
+      '<p>' + esc(p.next.question) + '</p>' +
+      '<div class="row">' +
+        '<button id="primerRun">Work through this</button>' +
+        '<button class="ghost" id="primerSkip">Skip</button>' +
+      '</div>' +
+      '<div class="bar"><i style="width:' + Math.round(done / p.total * 100) + '%"></i></div>' +
+    '</div>';
+}
+
+/* ------------------------------------------------------------------ notes */
+
+function drawNotes(filter) {
+  const q = (filter || '').toLowerCase().trim();
+  let list = cache.notes || [];
+  if (q) list = list.filter(function (n) { return String(n.question).toLowerCase().indexOf(q) > -1; });
+
+  // writes into #noteList, never the whole section — the search input lives there too
+  const target = document.getElementById('noteList');
+  if (!list.length) {
+    target.innerHTML = '<div class="empty">' +
+      (q ? 'No notes match that.' : 'Nothing saved yet.<br>Every research answer lands here automatically.') +
+      '</div>';
+    return;
+  }
+  target.innerHTML = list.map(function (n) {
+    return '<article class="card" data-note="' + esc(n.id) + '">' +
+      '<h3>' + esc(n.question) + '</h3>' +
+      '<div class="sub">' + (n.topic ? '<span class="tag">' + esc(n.topic) + '</span>' : '') +
+      (n.origin === 'primer' ? '<span class="tag amber">primer</span>' : '') +
+      '<span>' + ago(n.date) + '</span></div>' +
+      '<div class="expand hide"></div></article>';
+  }).join('');
+}
+
+document.getElementById('nq').addEventListener('input', function (e) { drawNotes(e.target.value); });
+
+/* --------------------------------------------- already-asked-this matching */
+
+const STOP = {the:1,a:1,an:1,of:1,in:1,on:1,for:1,to:1,and:1,or:1,is:1,are:1,what:1,how:1,
+  does:1,do:1,it:1,this:1,that:1,with:1,at:1,by:1,from:1,as:1,be:1,has:1,have:1,i:1,my:1,me:1};
+
+function keywords(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .filter(function (w) { return w.length > 2 && !STOP[w]; });
+}
+
+function showMatches() {
+  const q = document.getElementById('q').value.trim();
+  const box = document.getElementById('matches');
+  if (q.length < 8 || !cache.notes.length) { box.innerHTML = ''; return; }
+
+  const kw = keywords(q);
+  if (!kw.length) { box.innerHTML = ''; return; }
+
+  const scored = cache.notes.map(function (n) {
+    const nk = keywords(n.question);
+    let hit = 0;
+    kw.forEach(function (w) { if (nk.indexOf(w) > -1) hit++; });
+    return { n: n, score: hit / kw.length };
+  }).filter(function (x) { return x.score >= 0.5; })
+    .sort(function (a, b) { return b.score - a.score; });
+
+  box.innerHTML = scored.slice(0, 2).map(function (x) {
+    return '<div class="match" data-note="' + esc(x.n.id) + '">' +
+      '<b>Already in your notes</b>' + esc(x.n.question) + '</div>';
+  }).join('');
+}
+document.getElementById('q').addEventListener('input', showMatches);
+
+/* ----------------------------------------------------------------- events */
+
+document.addEventListener('click', async function (ev) {
+
+  // a saved note, opened from Notes or from a match chip
+  const noteEl = ev.target.closest('[data-note]');
+  if (noteEl) {
+    if (noteEl.classList.contains('match')) {
+      goTab('notes');
+      document.getElementById('nq').value = '';
+      drawNotes();
+      const card = document.querySelector('#t-notes [data-note="' + noteEl.dataset.note + '"]');
+      if (card) card.click();
+      return;
+    }
+    const box = noteEl.querySelector('.expand');
+    if (!box) return;
+    if (!box.classList.contains('hide')) { box.classList.add('hide'); return; }
+    box.classList.remove('hide');
+    if (box.dataset.done) return;
+    box.innerHTML = '<span class="spin"></span>';
+    try {
+      const n = await call('note', { id: noteEl.dataset.note });
+      box.innerHTML = md(n.text) + widgetHtml(n.widget) + sourcesHtml(n.sources);
+      box.dataset.done = '1';
+    } catch (e) { box.innerHTML = '<span style="color:var(--dim)">' + esc(e.message) + '</span>'; }
+    return;
+  }
+
+  // a headline card
+  const card = ev.target.closest('.card[data-kind]');
+  if (card) {
+    const box = card.querySelector('.expand');
+    if (!box.classList.contains('hide')) { box.classList.add('hide'); return; }
+    box.classList.remove('hide');
+    const row = cache[card.dataset.kind][card.dataset.i];
+    if (box.dataset.done) return;
+    box.innerHTML = '<span class="spin"></span>';
+    try {
+      const r = await call('explain', { title: row.title, source: row.source, link: row.link });
+      box.innerHTML = md(r.text) + '<p><a href="' + esc(row.link) + '" target="_blank" rel="noopener">Read the original →</a></p>';
+      box.dataset.done = '1';
+    } catch (e) { box.innerHTML = '<span style="color:var(--dim)">' + esc(e.message) + '</span>'; }
+    return;
+  }
+
+  if (ev.target.id === 'primerRun') {
+    const p = cache.primer.next;
+    document.getElementById('q').value = p.question;
+    research(p.id);
+    return;
+  }
+
+  if (ev.target.id === 'primerSkip') {
+    ev.target.disabled = true;
+    try { cache = await call('primerSkip', { id: cache.primer.next.id }); drawPrimer(); }
+    catch (e) { ev.target.disabled = false; }
+    return;
+  }
+
+  const chip = ev.target.closest('.chips button');
+  if (chip) { document.getElementById('q').value = chip.dataset.q; showMatches(); research(); return; }
+
+  const tab = ev.target.closest('nav button');
+  if (tab) goTab(tab.dataset.tab);
+});
+
+function goTab(name) {
+  document.querySelectorAll('nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
+  ['brief', 'deals', 'research', 'notes'].forEach(function (t) {
+    document.getElementById('t-' + t).classList.toggle('hide', t !== name);
+  });
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('goBtn').onclick = function () { research(); };
+
+async function research(primerId) {
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  const out = document.getElementById('out');
+  const btn = document.getElementById('goBtn');
+  btn.disabled = true;
+  document.getElementById('matches').innerHTML = '';
+  out.innerHTML = '<div class="empty"><span class="spin"></span><br><br>Searching and reading sources.<br>30–90 seconds.</div>';
+  try {
+    const r = await call('research', primerId ? { query: q, primerId: primerId } : { query: q });
+    out.innerHTML = md(r.text) + widgetHtml(r.widget) + sourcesHtml(r.sources) +
+      '<div class="saved">✓ Saved to Notes</div>';
+    cache = await call('data');          // refresh notes index + primer progress
+    drawPrimer(); drawNotes();
+  } catch (e) {
+    out.innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+  }
+  btn.disabled = false;
+}
+
+// Google's grounding terms require the Search Suggestions widget to be shown
+// alongside a grounded answer. The API hands back ready-made HTML; render it as is.
+function widgetHtml(w) { return w ? '<div class="gsuggest">' + w + '</div>' : ''; }
+
+function sourcesHtml(sources) {
+  if (!sources || !sources.length) return '';
+  return '<div class="sources"><strong>Sources</strong>' + sources.map(function (s) {
+    return '<div><a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.title || s.url) + '</a></div>';
+  }).join('') + '</div>';
+}
+
+/* ---------------------------------------------------------------- helpers */
+
+function render(id, html) { document.getElementById('t-' + id).innerHTML = html; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+function ago(d) {
+  const h = (Date.now() - new Date(d)) / 36e5;
+  if (h < 1) return 'just now';
+  if (h < 24) return Math.round(h) + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+}
+function md(t) {
+  return esc(t)
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, '<ul>$1</ul>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^/, '<p>').replace(/$/, '</p>');
+}
+</script>
+</body>
+</html>
