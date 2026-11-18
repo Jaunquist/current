@@ -12,6 +12,10 @@
 <meta name="apple-mobile-web-app-title" content="Current">
 <meta name="theme-color" content="#0e1116">
 <meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reddit+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -20,14 +24,27 @@
 <style>
   :root{
     --bg:#0e1116; --panel:#161b22; --line:#232a33;
-    --txt:#e6edf3; --dim:#8b949e; --accent:#f0b429; --accent2:#58a6ff;
+    --txt:#e6edf3; --dim:#8b949e;
+
+    /* --brand is fills only: at 1.8:1 on this background it is unreadable as
+       text, so lime always goes on top of it and never beside it.
+       --accent (lime) is 16.9:1 on the background and 9.3:1 on the brand blue,
+       so it carries every highlight. --link stays a periwinkle so links read as
+       links rather than as accents. */
+    --brand:#0400DB;
+    --accent:#E6FF56;
+    --link:#9AA0FF;
+    --brand-soft:rgba(230,255,86,.14);
+    --brand-line:rgba(4,0,219,.55);
+
+    --font:'Reddit Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     --radius:12px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   html{background:var(--bg);height:100%}
   body{
     margin:0;background:var(--bg);color:var(--txt);
-    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font:400 16px/1.55 var(--font);
     min-height:100dvh;
     padding-bottom:calc(64px + env(safe-area-inset-bottom));
     overscroll-behavior-y:none;
@@ -41,7 +58,7 @@
     border-bottom:1px solid var(--line);
     display:flex;align-items:center;justify-content:space-between;gap:12px;
   }
-  h1{font-size:17px;margin:0;letter-spacing:-.01em}
+  h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.015em}
   h1 span{color:var(--accent)}
   .meta{font-size:12px;color:var(--dim)}
   main{
@@ -53,18 +70,18 @@
     background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     padding:14px;margin-bottom:10px;
   }
-  .card h3{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+  .card h3{margin:0;font-size:15px;font-weight:600;line-height:1.35;letter-spacing:-.005em}
   .card .sub{font-size:12px;color:var(--dim);margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .tag{background:#1f2630;border-radius:999px;padding:2px 8px;font-size:11px;color:var(--dim)}
-  .tag.amber{background:rgba(240,180,41,.14);color:var(--accent)}
+  .tag.hi{background:var(--brand-soft);color:var(--accent);font-weight:500}
   .expand{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:#c9d1d9}
-  .expand a{color:var(--accent2)}
+  .expand a{color:var(--link)}
   nav{
     position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);
     border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);
   }
   nav button{
-    flex:1;background:none;border:none;color:var(--dim);font-size:11px;
+    flex:1;background:none;border:none;color:var(--dim);font-size:11px;font-weight:500;
     padding:11px 2px;cursor:pointer;font-family:inherit;
   }
   nav button.on{color:var(--accent)}
@@ -77,7 +94,7 @@
   textarea{resize:vertical;min-height:84px}
   input[type=search]{-webkit-appearance:none}
   button.go{
-    width:100%;margin-top:10px;background:var(--accent);color:#1a1200;border:none;
+    width:100%;margin-top:10px;background:var(--brand);color:var(--accent);border:none;
     border-radius:var(--radius);padding:13px;font:inherit;font-weight:600;cursor:pointer;
   }
   button.go:disabled{opacity:.5}
@@ -91,32 +108,32 @@
     border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;cursor:pointer;text-align:left;
   }
   .primer{
-    background:linear-gradient(180deg,rgba(240,180,41,.07),transparent);
-    border:1px solid rgba(240,180,41,.25);border-radius:var(--radius);
+    background:linear-gradient(180deg,rgba(4,0,219,.28),transparent);
+    border:1px solid var(--brand-line);border-radius:var(--radius);
     padding:14px;margin-bottom:16px;
   }
-  .primer .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .primer .lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
   .primer p{margin:0 0 12px;font-size:15px;line-height:1.4}
   .primer .row{display:flex;gap:8px}
   .primer .row button:first-child{
-    flex:1;background:var(--accent);color:#1a1200;border:none;border-radius:var(--radius);
+    flex:1;background:var(--brand);color:var(--accent);border:none;border-radius:var(--radius);
     padding:11px;font:inherit;font-weight:600;cursor:pointer;
   }
   .bar{height:3px;background:var(--line);border-radius:2px;margin-top:12px;overflow:hidden}
-  .bar i{display:block;height:100%;background:var(--accent)}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .3s ease}
   .out{margin-top:18px;font-size:15px;line-height:1.6}
   .out h2{font-size:16px;margin:20px 0 8px}
   .out h3{font-size:14px;margin:16px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
   .out ul{padding-left:20px;margin:8px 0}
   .out li{margin:5px 0}
-  .out a{color:var(--accent2)}
+  .out a{color:var(--link)}
   .gsuggest{margin-top:18px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .sources{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:13px}
   .sources div{margin:5px 0}
   .saved{margin-top:14px;font-size:12px;color:var(--accent)}
   .match{
     margin-top:10px;padding:10px 12px;background:var(--panel);
-    border:1px solid var(--line);border-left:2px solid var(--accent);
+    border:1px solid var(--line);border-left:2px solid var(--accent);background:var(--panel);
     border-radius:8px;font-size:13px;cursor:pointer;
   }
   .match b{display:block;font-size:11px;color:var(--accent);font-weight:600;
@@ -136,7 +153,8 @@
 <body>
 
 <div id="gate" class="gate">
-  <h1 style="font-size:22px;margin:0 0 8px">Cur<span style="color:var(--accent)">rent</span></h1>
+  <img src="icon-mark.svg" alt="" width="64" height="64" style="border-radius:16px;margin-bottom:18px">
+  <h1 style="font-size:24px;margin:0 0 8px">Cur<span style="color:var(--accent)">rent</span></h1>
   <p>Sign in to continue.</p>
   <div id="gbtn" style="display:flex;justify-content:center"></div>
 </div>
@@ -253,7 +271,7 @@ function drawBrief() {
 function drawDeals() {
   let html = '';
   if (cache.synthesis) {
-    html += '<div class="card" style="border-color:rgba(240,180,41,.25)">' +
+    html += '<div class="card" style="border-color:var(--brand-line)">' +
       '<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">' +
       'Last 90 days · ' + new Date(cache.synthesis.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) + '</div>' +
       '<div class="out" style="margin:0;font-size:14px">' + md(cache.synthesis.text) + '</div></div>';
@@ -264,7 +282,7 @@ function drawDeals() {
     html += cache.deals.map(function (r, i) {
       return '<article class="card" data-i="' + i + '" data-kind="deals">' +
         '<h3>' + esc(r.title) + '</h3>' +
-        '<div class="sub">' + (r.amount ? '<span class="tag amber">' + esc(r.amount) + '</span>' : '') +
+        '<div class="sub">' + (r.amount ? '<span class="tag hi">' + esc(r.amount) + '</span>' : '') +
         '<span>' + esc(r.source) + '</span><span>' + ago(r.date) + '</span></div>' +
         '<div class="expand hide"></div></article>';
     }).join('');
@@ -316,7 +334,7 @@ function drawNotes(filter) {
     return '<article class="card" data-note="' + esc(n.id) + '">' +
       '<h3>' + esc(n.question) + '</h3>' +
       '<div class="sub">' + (n.topic ? '<span class="tag">' + esc(n.topic) + '</span>' : '') +
-      (n.origin === 'primer' ? '<span class="tag amber">primer</span>' : '') +
+      (n.origin === 'primer' ? '<span class="tag hi">primer</span>' : '') +
       '<span>' + ago(n.date) + '</span></div>' +
       '<div class="expand hide"></div></article>';
   }).join('');
